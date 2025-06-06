@@ -1,5 +1,5 @@
 import tkinter as tk
-
+import random
 
 class Calculator:
     def __init__(self, root):
@@ -19,7 +19,7 @@ class Calculator:
             ['4', '5', '6', '*'],
             ['1', '2', '3', '-'],
             ['0', '.', 'C', '+'],
-            ['=']
+            ['=', '게임']
         ]
 
         for row in buttons:
@@ -39,14 +39,59 @@ class Calculator:
             self.expression = ""
         elif char == '=':
             try:
-                self.expression = str(eval(self.expression))
+                result = str(eval(self.expression))
+                self.expression = result
             except Exception:
                 self.expression = "에러"
+        elif char == '게임':
+            self.open_game_window()
         else:
             self.expression += str(char)
 
         self.entry.delete(0, tk.END)
         self.entry.insert(tk.END, self.expression)
 
+    def open_game_window(self):
+        game_window = tk.Toplevel(self.root)
+        game_window.title("계산기 게임")
+        game_window.geometry("300x200")
 
+        tk.Label(game_window, text="플레이할 게임을 선택하세요", font=("Arial", 16)).pack(pady=10)
+        tk.Button(game_window, text="1. 숫자 야구", font=("Arial", 14), command=lambda: self.play_baseball(game_window)).pack(fill="x", padx=20, pady=5)
 
+    def play_baseball(self, parent):
+        baseball_window = tk.Toplevel(parent)
+        baseball_window.title("숫자 야구 게임")
+        baseball_window.geometry("300x200")
+
+        secret = random.sample(range(1, 10), 3)
+        attempts = 0
+
+        tk.Label(baseball_window, text="1~9 중복 없는 3자리 숫자 입력", font=("Arial", 12)).pack(pady=5)
+        entry = tk.Entry(baseball_window, font=("Arial", 14))
+        entry.pack(pady=5)
+        result_label = tk.Label(baseball_window, text="", font=("Arial", 12))
+        result_label.pack(pady=5)
+
+        def check_guess():
+            nonlocal attempts
+            guess = entry.get()
+            if len(guess) != 3 or not guess.isdigit() or len(set(guess)) != 3 or not all(1 <= int(c) <= 9 for c in guess):
+                result_label.config(text="잘못된 입력! 1~9 중복 없는 3자리 숫자 입력")
+                return
+
+            guess = list(map(int, guess))
+            strikes = sum(s == g for s, g in zip(secret, guess))
+            balls = sum(g in secret for g in guess) - strikes
+            attempts += 1
+            result_label.config(text=f"{strikes} 스트라이크, {balls} 볼\n시도 횟수: {attempts}")
+
+            if strikes == 3:
+                result_label.config(text=f"정답! 숫자: {''.join(map(str, secret))}\n시도 횟수: {attempts}")
+                entry.config(state="disabled")
+
+        tk.Button(baseball_window, text="확인", font=("Arial", 12), command=check_guess).pack(pady=5)
+
+root = tk.Tk()
+app = Calculator(root)
+root.mainloop()
